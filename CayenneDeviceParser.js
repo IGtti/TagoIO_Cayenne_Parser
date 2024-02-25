@@ -41,8 +41,9 @@ if(lora_payload) {
             payload.push({"variable": "digin" + (("00"+schannel).slice(-2)), "value": svalue});     // build the decoded payload
             break;
 
-         case 0x02:                                                              // Analog input
+         case 0x02:                                                              // Analog input (signed value)
             svalue = (lora_buffer[bindex++] << 8 | lora_buffer[bindex++]) & 0xFFFF;         // get the sensor value
+            if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
             svalue = svalue / 100;                                               // resolution 0.01
             payload.push({"variable": "anain" + (("00"+schannel).slice(-2)), "value": svalue});      // build the decoded payload
             break;
