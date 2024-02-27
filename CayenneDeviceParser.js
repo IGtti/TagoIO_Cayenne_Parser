@@ -4,7 +4,7 @@
 const ignore_vars = ['time', 'packet_id', 'gateway', 'delay', 'datarate', 'modulation_bandwidth', 'modulation_type', 'modulation_type', 'modulation_coderate', 'hardware_status', 'hardware_chain',
  'hardware_tmst', 'freq', 'size', 'port', 'duplicate', 'counter_up', 'encrypted_payload', 'header_class_b', 'header_confirmed', 'header_adr', 'header_ack', 'header_adr_ack_req', 'header_version',
   'header_type', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK', 'Status_Power_ACK', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK', 'Status_Power_ACK', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK',
-   'Status_Power_ACK', 'Status_RX2_Data_rate_ACK', 'Status_Channel_ACK', 'Status_RX1DRoffset_ACK', 'rx_time', 'modulation_spreading', 'hardware_channel', 'gps_location', 'gps_alt', 'outdated', 'gps_time'];
+   'Status_Power_ACK', 'Status_RX2_Data_rate_ACK', 'Status_Channel_ACK', 'Status_RX1DRoffset_ACK', 'rx_time', 'modulation_spreading', 'hardware_channel', 'gps_alt', 'outdated', 'gps_time'];
 
 // Remove unwanted variables
 payload = payload.filter(x => !ignore_vars.includes(x.variable));
@@ -15,6 +15,9 @@ if(lora_snr) lora_snr = lora_snr.value;
 
 var lora_rssi = payload.find(data => data.variable === "hardware_rssi");         // RSSI
 if(lora_rssi) lora_rssi = lora_rssi.value;
+
+var lora_gtw_location = payload.find(data => data.variable === "gps_location");  // Gateway location
+if(lora_gtw_location) lora_gtw_location = lora_gtw_location.location;
 
 const lora_payload = payload.find(data => data.variable === "payload");          // Sensor data
 
@@ -30,6 +33,7 @@ if(lora_payload) {
    payload = [];                                                                 // clean the payload array
    payload.push({"variable": "lora_snr", "value": lora_snr});                    // build the decoded payload
    payload.push({"variable": "lora_rssi", "value": lora_rssi});                  // build the decoded payload
+   payload.push({"variable": "gtw_location", "location": lora_gtw_location});    // build the decoded payload
 
    for(bindex = 0; bindex < bsize; ) {
       schannel = lora_buffer[bindex++];                                          // get sensor channel
