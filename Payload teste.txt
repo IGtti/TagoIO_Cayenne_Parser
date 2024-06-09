@@ -1,0 +1,45 @@
+
+23:10:29:
+[MQTT] Device publish
+{ "topic": "01155040/setinmidtown/", "payload": "037303D9056700FE06686A320000", "qos": 0, "device": "63b7521e09a07a000997c93b", "messageId": null, "isHex": false }
+{
+    "topic": "01155040/setinmidtown/",
+    "payload": "037303D9056700FE06686A320000",
+    "qos": 0,
+    "device": "63b7521e09a07a000997c93b",
+    "messageId": null,
+    "isHex": false
+}
+23:10:29:
+Raw payload:
+[ { "variable": "payload", "value": "037303D9056700FE06686A320000", "metadata": { "mqtt_topic": "01155040/setinmidtown/" } } ]
+[
+    {
+        "variable": "payload",
+        "value": "037303D9056700FE06686A320000",
+        "metadata": {
+            "mqtt_topic": "01155040/setinmidtown/"
+        }
+    }
+]
+23:10:29:
+Result of [device] payload parser:
+[ { "variable": "level03", "value": 98.5 }, { "variable": "temp05", "value": 25.4 }, { "variable": "hmdt06", "value": 53 }, { "variable": "digin50", "value": 0 } ]
+[
+    {
+        "variable": "level03",
+        "value": 98.5
+    },
+    {
+        "variable": "temp05",
+        "value": 25.4
+    },
+    {
+        "variable": "hmdt06",
+        "value": 53
+    },
+    {
+        "variable": "digin50",
+        "value": 0
+    }
+]
