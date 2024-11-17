@@ -1,4 +1,8 @@
 // This is a custom payload parser to be used in the LoRaWAN, LoRaP2P and WiFi data for TellMee devices
+//
+// Iaran Gadotti
+// Date: 16/Nov/2024
+// Version: 02.00
 
 // Add ignorable variables in this array.
 const ignore_vars = ['time', 'packet_id', 'gateway', 'delay', 'datarate', 'modulation_bandwidth', 'modulation_type', 'modulation_type', 'modulation_coderate', 'hardware_status', 'hardware_chain',
