@@ -1,15 +1,14 @@
-// This is a custom payload parser to be used in the LoRaWAN, LoRaP2P and WiFi data for TellMee devices
+// This is a custom payload parser to be used in the LoRaWAN, LoRaP2P and WiFi data for TellMee IOT devices
 //
 // Iaran Gadotti
-// Date: 16/Nov/2024
-// Version: 02.00
+// Date: 18/Apr/2026
+// Version: 03.00
 
 // Add ignorable variables in this array.
 const ignore_vars = ['time', 'packet_id', 'gateway', 'delay', 'datarate', 'modulation_bandwidth', 'modulation_type', 'modulation_type', 'modulation_coderate', 'hardware_status', 'hardware_chain',
  'hardware_tmst', 'freq', 'size', 'port', 'duplicate', 'counter_up', 'encrypted_payload', 'header_class_b', 'header_confirmed', 'header_adr', 'header_ack', 'header_adr_ack_req', 'header_version',
   'header_type', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK', 'Status_Power_ACK', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK', 'Status_Power_ACK', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK',
-   'Status_Power_ACK', 'Status_RX2_Data_rate_ACK', 'Status_Channel_ACK', 'Status_RX1DRoffset_ACK', 'rx_time', 'modulation_spreading', 'hardware_channel', 'gps_location', 'gps_alt', 'outdated', 'gps_time',
-'hardware_snr', 'hardware_rssi'];
+   'Status_Power_ACK', 'Status_RX2_Data_rate_ACK', 'Status_Channel_ACK', 'Status_RX1DRoffset_ACK', 'modulation_spreading', 'hardware_channel', 'gps_location', 'gps_alt', 'outdated', 'gps_time', 'hardware_snr', 'hardware_rssi'];
 
 // Remove unwanted variables
 payload = payload.filter(x => !ignore_vars.includes(x.variable));
@@ -23,6 +22,14 @@ payload = payload.filter(x => !ignore_vars.includes(x.variable));
 
 //var lora_gtw_location = payload.find(data => data.variable === "gps_location");  // Gateway location
 //if(lora_gtw_location) lora_gtw_location = lora_gtw_location.location;
+
+var lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
+if(lora_gtw_rxtime) {
+   lora_gtw_rxtime = lora_gtw_rxtime.value;
+   console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
+   lora_gtw_rxtime = new Date(lora_gtw_rxtime * 1000).toISOString();                // Convert to ISO String format
+   console.log('lora_gtw_rxtime ISO:', lora_gtw_rxtime);                            // print for debugg
+}
 
 const sensor_payload = payload.find(data => data.variable === "payload");          // Sensor data
 
@@ -60,7 +67,8 @@ if(sensor_payload) {
             svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;              // get the sensor value
             if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
             svalue = svalue / 10;                                                // resolution 0.1
-            payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue});       // build the decoded payload
+            //payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue});       // build the decoded payload
+            payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});       // build the decoded payload
             break;
 
          case 0x68:                                                              // Humidity Sensor
