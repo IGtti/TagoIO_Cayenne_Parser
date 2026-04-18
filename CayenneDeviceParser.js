@@ -26,7 +26,7 @@ payload = payload.filter(x => !ignore_vars.includes(x.variable));
 var lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
 if(lora_gtw_rxtime) {
    lora_gtw_rxtime = lora_gtw_rxtime.value;
-   console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
+   //console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
    lora_gtw_rxtime = new Date(lora_gtw_rxtime * 1000).toISOString();                // Convert to ISO String format
    console.log('lora_gtw_rxtime ISO:', lora_gtw_rxtime);                            // print for debugg
 }
@@ -43,8 +43,8 @@ if(sensor_payload) {
    var stype;                                                                    // sensor type
 
    payload = [];                                                                 // clean the payload array
-   //payload.push({"variable": "lora_snr", "value": lora_snr});                  // build the decoded payload
-   //payload.push({"variable": "lora_rssi", "value": lora_rssi});                // build the decoded payload
+   //payload.push({"variable": "lora_snr", "value": lora_snr, "time": lora_gtw_rxtime});                  // build the decoded payload
+   //payload.push({"variable": "lora_rssi", "value": lora_rssi, "time": lora_gtw_rxtime});                // build the decoded payload
 
    for(bindex = 0; bindex < bsize; ) {
       schannel = sensor_buffer[bindex++];                                        // get sensor channel
@@ -53,14 +53,14 @@ if(sensor_payload) {
       switch(stype) {
          case 0x00:                                                              // Digital Input
             svalue = sensor_buffer[bindex++] & 0xFF;                             // get the sensor value
-            payload.push({"variable": "digin" + (("00"+schannel).slice(-2)), "value": svalue});     // build the decoded payload
+            payload.push({"variable": "digin" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});     // build the decoded payload
             break;
 
          case 0x02:                                                              // Analog input (signed value)
             svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;              // get the sensor value
             if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
             svalue = svalue / 100;                                               // resolution 0.01
-            payload.push({"variable": "anain" + (("00"+schannel).slice(-2)), "value": svalue});      // build the decoded payload
+            payload.push({"variable": "anain" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});      // build the decoded payload
             break;
          
          case 0x67:                                                              // Temperature Sensor (signed value)
@@ -74,17 +74,17 @@ if(sensor_payload) {
          case 0x68:                                                              // Humidity Sensor
             svalue = sensor_buffer[bindex++] & 0xFF;                             // get the sensor value
             svalue = svalue / 2;                                                 // resolution 0.5
-            payload.push({"variable": "hmdt" + (("00"+schannel).slice(-2)), "value": svalue});      // build the decoded payload
+            payload.push({"variable": "hmdt" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});      // build the decoded payload
             break;
 
          case 0x73:                                                              // Barometer, used for Percentage (Level Input)
             svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;             // get the sensor value
             svalue = svalue / 10;                                                // resolution 0.1
-            payload.push({"variable": "level" + (("00"+schannel).slice(-2)), "value": svalue});     // build the decoded payload
+            payload.push({"variable": "level" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});     // build the decoded payload
             break;
 
          default:                                                                // Sensor type not found
-            payload.push({"variable": "error", "value": schannel});              // Output "error" and channel  
+            payload.push({"variable": "error", "value": schannel, "time": lora_gtw_rxtime});              // Output "error" and channel  
       }
    }
 }
