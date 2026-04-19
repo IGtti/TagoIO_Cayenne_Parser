@@ -2,7 +2,7 @@
 //
 // Iaran Gadotti
 // Date: 18/Apr/2026
-// Version: 03.00
+// Version: 03.01
 
 // Add ignorable variables in this array.
 const ignore_vars = ['time', 'packet_id', 'gateway', 'delay', 'datarate', 'modulation_bandwidth', 'modulation_type', 'modulation_type', 'modulation_coderate', 'hardware_status', 'hardware_chain',
@@ -23,7 +23,7 @@ payload = payload.filter(x => !ignore_vars.includes(x.variable));
 //var lora_gtw_location = payload.find(data => data.variable === "gps_location");  // Gateway location
 //if(lora_gtw_location) lora_gtw_location = lora_gtw_location.location;
 
-var lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
+let lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
 if(lora_gtw_rxtime) {
    lora_gtw_rxtime = lora_gtw_rxtime.value;
    //console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
@@ -37,10 +37,10 @@ if(sensor_payload) {
    // convert the data from Hex to Javascript Buffer
    const sensor_buffer = Buffer.from(sensor_payload.value, 'hex');               // read string in bytes
    const bsize = sensor_buffer.byteLength;                                       // buffer size in bytes
-   var bindex;                                                                   // buffer index
-   var svalue;                                                                   // sensor value
-   var schannel;                                                                 // sensor channel
-   var stype;                                                                    // sensor type
+   let bindex;                                                                   // buffer index
+   let svalue;                                                                   // sensor value
+   let schannel;                                                                 // sensor channel
+   let stype;                                                                    // sensor type
 
    payload = [];                                                                 // clean the payload array
    //payload.push({"variable": "lora_snr", "value": lora_snr, "time": lora_gtw_rxtime});                  // build the decoded payload
