@@ -2,13 +2,13 @@
 //
 // Iaran Gadotti
 // Date: 18/Apr/2026
-// Version: 03.01
+// Version: 03.02
 
 // Add ignorable variables in this array.
 const ignore_vars = ['time', 'packet_id', 'gateway', 'delay', 'datarate', 'modulation_bandwidth', 'modulation_type', 'modulation_type', 'modulation_coderate', 'hardware_status', 'hardware_chain',
  'hardware_tmst', 'freq', 'size', 'port', 'duplicate', 'counter_up', 'encrypted_payload', 'header_class_b', 'header_confirmed', 'header_adr', 'header_ack', 'header_adr_ack_req', 'header_version',
   'header_type', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK', 'Status_Power_ACK', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK', 'Status_Power_ACK', 'Status_Channel_mask_ACK', 'Status_Data_rate_ACK',
-   'Status_Power_ACK', 'Status_RX2_Data_rate_ACK', 'Status_Channel_ACK', 'Status_RX1DRoffset_ACK', 'modulation_spreading', 'hardware_channel', 'gps_location', 'gps_alt', 'outdated', 'gps_time', 'hardware_snr', 'hardware_rssi'];
+   'Status_Power_ACK', 'Status_RX2_Data_rate_ACK', 'Status_Channel_ACK', 'Status_RX1DRoffset_ACK', 'modulation_spreading', 'hardware_channel', 'gps_location', 'gps_alt', 'gps_time', 'hardware_snr', 'hardware_rssi'];
 
 // Remove unwanted variables
 payload = payload.filter(x => !ignore_vars.includes(x.variable));
@@ -23,68 +23,82 @@ payload = payload.filter(x => !ignore_vars.includes(x.variable));
 //var lora_gtw_location = payload.find(data => data.variable === "gps_location");  // Gateway location
 //if(lora_gtw_location) lora_gtw_location = lora_gtw_location.location;
 
-let lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
-if(lora_gtw_rxtime) {
-   lora_gtw_rxtime = lora_gtw_rxtime.value;
-   //console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
-   lora_gtw_rxtime = new Date(lora_gtw_rxtime * 1000).toISOString();                // Convert to ISO String format
-   console.log('lora_gtw_rxtime ISO:', lora_gtw_rxtime);                            // print for debugg
-}
+let lora_outdated = payload.find(data => data.variable === "outdated");            // Test for outdated message, if positive ignore complete package
+if(!lora_outdated || lora_outdated.value == false) {                                // proceed only if not outdated message
+   //console.log('lora_outdated POSITIVE:', lora_outdated);                            // print for debugg
 
-const sensor_payload = payload.find(data => data.variable === "payload");          // Sensor data
+   //***********************************************************************************************************************************************
+   let lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
+   if(lora_gtw_rxtime) {
+      lora_gtw_rxtime = lora_gtw_rxtime.value;
+      //console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
+      lora_gtw_rxtime = new Date(lora_gtw_rxtime * 1000).toISOString();                // Convert to ISO String format
+      //console.log('lora_gtw_rxtime ISO:', lora_gtw_rxtime);                            // print for debugg
+   }
 
-if(sensor_payload) {
-   // convert the data from Hex to Javascript Buffer
-   const sensor_buffer = Buffer.from(sensor_payload.value, 'hex');               // read string in bytes
-   const bsize = sensor_buffer.byteLength;                                       // buffer size in bytes
-   let bindex;                                                                   // buffer index
-   let svalue;                                                                   // sensor value
-   let schannel;                                                                 // sensor channel
-   let stype;                                                                    // sensor type
+   const sensor_payload = payload.find(data => data.variable === "payload");          // Sensor data
 
-   payload = [];                                                                 // clean the payload array
-   //payload.push({"variable": "lora_snr", "value": lora_snr, "time": lora_gtw_rxtime});                  // build the decoded payload
-   //payload.push({"variable": "lora_rssi", "value": lora_rssi, "time": lora_gtw_rxtime});                // build the decoded payload
+   if(sensor_payload) {
+      // convert the data from Hex to Javascript Buffer
+      const sensor_buffer = Buffer.from(sensor_payload.value, 'hex');               // read string in bytes
+      const bsize = sensor_buffer.byteLength;                                       // buffer size in bytes
+      let bindex;                                                                   // buffer index
+      let svalue;                                                                   // sensor value
+      let schannel;                                                                 // sensor channel
+      let stype;                                                                    // sensor type
 
-   for(bindex = 0; bindex < bsize; ) {
-      schannel = sensor_buffer[bindex++];                                        // get sensor channel
-      stype = sensor_buffer[bindex++];                                           // get sensor type
+      payload = [];                                                                 // clean the payload array
+      //payload.push({"variable": "lora_snr", "value": lora_snr, "time": lora_gtw_rxtime});                  // build the decoded payload
+      //payload.push({"variable": "lora_rssi", "value": lora_rssi, "time": lora_gtw_rxtime});                // build the decoded payload
+      payload.push({"variable": "lora_outdated", "value": 0, "time": lora_gtw_rxtime});                // Debug the outdated message
 
-      switch(stype) {
-         case 0x00:                                                              // Digital Input
-            svalue = sensor_buffer[bindex++] & 0xFF;                             // get the sensor value
-            payload.push({"variable": "digin" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});     // build the decoded payload
-            break;
+      for(bindex = 0; bindex < bsize; ) {
+         schannel = sensor_buffer[bindex++];                                        // get sensor channel
+         stype = sensor_buffer[bindex++];                                           // get sensor type
 
-         case 0x02:                                                              // Analog input (signed value)
-            svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;              // get the sensor value
-            if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
-            svalue = svalue / 100;                                               // resolution 0.01
-            payload.push({"variable": "anain" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});      // build the decoded payload
-            break;
-         
-         case 0x67:                                                              // Temperature Sensor (signed value)
-            svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;              // get the sensor value
-            if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
-            svalue = svalue / 10;                                                // resolution 0.1
-            //payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue});       // build the decoded payload
-            payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});       // build the decoded payload
-            break;
+         switch(stype) {
+            case 0x00:                                                              // Digital Input
+               svalue = sensor_buffer[bindex++] & 0xFF;                             // get the sensor value
+               payload.push({"variable": "digin" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});     // build the decoded payload
+               break;
 
-         case 0x68:                                                              // Humidity Sensor
-            svalue = sensor_buffer[bindex++] & 0xFF;                             // get the sensor value
-            svalue = svalue / 2;                                                 // resolution 0.5
-            payload.push({"variable": "hmdt" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});      // build the decoded payload
-            break;
+            case 0x02:                                                              // Analog input (signed value)
+               svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;              // get the sensor value
+               if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
+               svalue = svalue / 100;                                               // resolution 0.01
+               payload.push({"variable": "anain" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});      // build the decoded payload
+               break;
+            
+            case 0x67:                                                              // Temperature Sensor (signed value)
+               svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;              // get the sensor value
+               if(svalue > 0x7FFF) svalue = svalue - 0x10000;                       // manage negative value
+               svalue = svalue / 10;                                                // resolution 0.1
+               //payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue});       // build the decoded payload
+               payload.push({"variable": "temp" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});       // build the decoded payload
+               break;
 
-         case 0x73:                                                              // Barometer, used for Percentage (Level Input)
-            svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;             // get the sensor value
-            svalue = svalue / 10;                                                // resolution 0.1
-            payload.push({"variable": "level" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});     // build the decoded payload
-            break;
+            case 0x68:                                                              // Humidity Sensor
+               svalue = sensor_buffer[bindex++] & 0xFF;                             // get the sensor value
+               svalue = svalue / 2;                                                 // resolution 0.5
+               payload.push({"variable": "hmdt" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});      // build the decoded payload
+               break;
 
-         default:                                                                // Sensor type not found
-            payload.push({"variable": "error", "value": schannel, "time": lora_gtw_rxtime});              // Output "error" and channel  
+            case 0x73:                                                              // Barometer, used for Percentage (Level Input)
+               svalue = (sensor_buffer[bindex++] << 8 | sensor_buffer[bindex++]) & 0xFFFF;             // get the sensor value
+               svalue = svalue / 10;                                                // resolution 0.1
+               payload.push({"variable": "level" + (("00"+schannel).slice(-2)), "value": svalue, "time": lora_gtw_rxtime});     // build the decoded payload
+               break;
+
+            default:                                                                // Sensor type not found
+               payload.push({"variable": "error", "value": schannel, "time": lora_gtw_rxtime});              // Output "error" and channel  
+         }
       }
    }
+   //***********************************************************************************************************************************************
+
+} else {
+   //console.log('lora_outdated NEGATIVE:', lora_outdated);                         // print for debugg
+
+   payload = [];                                                                  // clean the payload array
+   payload.push({"variable": "lora_outdated", "value": 1});                       // Debug the outdated message
 }
