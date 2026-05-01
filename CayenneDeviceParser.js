@@ -1,7 +1,7 @@
 // This is a custom payload parser to be used in the LoRaWAN, LoRaP2P and WiFi data for TellMee IOT devices
 //
 // Iaran Gadotti
-// Date: 18/Apr/2026
+// Date: 01/May/2026
 // Version: 03.02
 
 // Add ignorable variables in this array.
@@ -28,15 +28,18 @@ if(!lora_outdated || lora_outdated.value == false) {                            
    //console.log('lora_outdated POSITIVE:', lora_outdated);                            // print for debugg
 
    //***********************************************************************************************************************************************
-   let lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");            // Gateway rx time
+   let lora_gtw_rxtime = payload.find(data => data.variable === "rx_time");         // Gateway rx time
    if(lora_gtw_rxtime) {
       lora_gtw_rxtime = lora_gtw_rxtime.value;
-      //console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                            // print for debugg
-      lora_gtw_rxtime = new Date(lora_gtw_rxtime * 1000).toISOString();                // Convert to ISO String format
-      //console.log('lora_gtw_rxtime ISO:', lora_gtw_rxtime);                            // print for debugg
+      //console.log('lora_gtw_rxtime RAW:', lora_gtw_rxtime);                         // print for debugg
+      lora_gtw_rxtime = new Date(lora_gtw_rxtime * 1000).toISOString();             // Convert to ISO String format
+      //console.log('lora_gtw_rxtime ISO:', lora_gtw_rxtime);                         // print for debugg
+   } else {
+      lora_gtw_rxtime = null;                                                       // in case the rxtime is not available in the package from LNS, takes the Tago IO system time in the platform
    }
 
-   const sensor_payload = payload.find(data => data.variable === "payload");          // Sensor data
+   const sensor_payload = payload.find(data => data.variable === "payload");        // Sensor data
+   payload = [];                                                                    // clean the payload array
 
    if(sensor_payload) {
       // convert the data from Hex to Javascript Buffer
@@ -47,10 +50,9 @@ if(!lora_outdated || lora_outdated.value == false) {                            
       let schannel;                                                                 // sensor channel
       let stype;                                                                    // sensor type
 
-      payload = [];                                                                 // clean the payload array
       //payload.push({"variable": "lora_snr", "value": lora_snr, "time": lora_gtw_rxtime});                  // build the decoded payload
       //payload.push({"variable": "lora_rssi", "value": lora_rssi, "time": lora_gtw_rxtime});                // build the decoded payload
-      payload.push({"variable": "lora_outdated", "value": 0, "time": lora_gtw_rxtime});                // Debug the outdated message
+      //payload.push({"variable": "lora_outdated", "value": 0, "time": lora_gtw_rxtime});                    // Debug the outdated message
 
       for(bindex = 0; bindex < bsize; ) {
          schannel = sensor_buffer[bindex++];                                        // get sensor channel
@@ -98,7 +100,6 @@ if(!lora_outdated || lora_outdated.value == false) {                            
 
 } else {
    //console.log('lora_outdated NEGATIVE:', lora_outdated);                         // print for debugg
-
    payload = [];                                                                  // clean the payload array
-   payload.push({"variable": "lora_outdated", "value": 1});                       // Debug the outdated message
+   //payload.push({"variable": "lora_outdated", "value": 1});                       // Debug the outdated message
 }
